@@ -1,184 +1,143 @@
-# Snake Game in Python 3 
-# By vivek
-
 import turtle
 import time
 import random
 
-delay = 0.1
+# Constants
+DELAY = 0.1
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 600
+FOOD_SIZE = 20
+MOVE_DISTANCE = 20
+FONT = ("Courier", 24, "normal")
 
-# For_Points_here 
-points = 0
-points_to_beat = 0
+class Game:
+    def __init__(self):
+        self.points = 0
+        self.points_to_beat = 0
+        self.segments = []
+        self.delay = DELAY
 
-# To_Set_up the screen
-wn = turtle.Screen()
-wn.title("Snake Game by Vivek 😁")
-wn.bgcolor("Beige")
-wn.setup(width=600, height=600)
-wn.tracer(0) # Turns off the screen updates
+        # Screen setup
+        self.wn = turtle.Screen()
+        self.wn.title("Snake Game by Vivek 😁")
+        self.wn.bgcolor("Beige")
+        self.wn.setup(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
+        self.wn.tracer(0)
 
-# Snake head
-head = turtle.Turtle()
-head.speed(0)
-head.shape("circle")
-head.color("red")
-head.penup()
-head.goto(0,0)
-head.direction = "stop"
+        # Pen setup
+        self.pen = turtle.Turtle()
+        self.pen.speed(0)
+        self.pen.shape("circle")
+        self.pen.color("black")
+        self.pen.penup()
+        self.pen.hideturtle()
+        self.pen.goto(0, 260)
+        self.update_score()
 
-# Snake food
-food = turtle.Turtle()
-food.speed(0)
-food.shape("square")
-food.color("blue")
-food.penup()
-food.goto(0,100)
+        # Snake and food setup
+        self.head = self.create_turtle("circle", "red", (0, 0))
+        self.head.direction = "stop"
+        self.food = self.create_turtle("square", "blue", (0, 100))
 
-segments = []
+        # Keyboard bindings
+        self.wn.listen()
+        self.wn.onkeypress(self.go_up, "w")
+        self.wn.onkeypress(self.go_down, "s")
+        self.wn.onkeypress(self.go_left, "a")
+        self.wn.onkeypress(self.go_right, "d")
 
-# Pen
-pen = turtle.Turtle()
-pen.speed(0)
-pen.shape("circle")
-pen.color("black")
-pen.penup()
-pen.hideturtle()
-pen.goto(0, 260)
-pen.write("points_punktzahl: 0  Top_score👻: 0", align="center", font=("Courier", 24, "normal"))
+    def create_turtle(self, shape: str, color: str, position: tuple) -> turtle.Turtle:
+        t = turtle.Turtle()
+        t.speed(0)
+        t.shape(shape)
+        t.color(color)
+        t.penup()
+        t.goto(position)
+        return t
 
-# Functions
-def go_up():
-    if head.direction != "down":
-        head.direction = "up"
+    def update_score(self):
+        self.pen.clear()
+        self.pen.write(f"points_punktzahl: {self.points}  Top_score👻: {self.points_to_beat}", align="center", font=FONT)
 
-def go_down():
-    if head.direction != "up":
-        head.direction = "down"
+    def go_up(self):
+        if self.head.direction != "down":
+            self.head.direction = "up"
 
-def go_left():
-    if head.direction != "right":
-        head.direction = "left"
+    def go_down(self):
+        if self.head.direction != "up":
+            self.head.direction = "down"
 
-def go_right():
-    if head.direction != "left":
-        head.direction = "right"
+    def go_left(self):
+        if self.head.direction != "right":
+            self.head.direction = "left"
 
-def move():
-    if head.direction == "up":
-        y = head.ycor()
-        head.sety(y + 20)
+    def go_right(self):
+        if self.head.direction != "left":
+            self.head.direction = "right"
 
-    if head.direction == "down":
-        y = head.ycor()
-        head.sety(y - 20)
+    def move(self):
+        if self.head.direction == "up":
+            y = self.head.ycor()
+            self.head.sety(y + MOVE_DISTANCE)
+        if self.head.direction == "down":
+            y = self.head.ycor()
+            self.head.sety(y - MOVE_DISTANCE)
+        if self.head.direction == "left":
+            x = self.head.xcor()
+            self.head.setx(x - MOVE_DISTANCE)
+        if self.head.direction == "right":
+            x = self.head.xcor()
+            self.head.setx(x + MOVE_DISTANCE)
 
-    if head.direction == "left":
-        x = head.xcor()
-        head.setx(x - 20)
-
-    if head.direction == "right":
-        x = head.xcor()
-        head.setx(x + 20)
-
-# Keyboard bindings
-wn.listen()
-wn.onkeypress(go_up, "w")
-wn.onkeypress(go_down, "s")
-wn.onkeypress(go_left, "a")
-wn.onkeypress(go_right, "d")
-
-# Main game loop
-while True:
-    wn.update()
-
-    # Check for a collision with the border
-    if head.xcor()>290 or head.xcor()<-290 or head.ycor()>290 or head.ycor()<-290:
+    def reset(self):
         time.sleep(1)
-        head.goto(0,0)
-        head.direction = "stop"
-
-        # Hide the segments
-        for segment in segments:
+        self.head.goto(0, 0)
+        self.head.direction = "stop"
+        for segment in self.segments:
             segment.goto(1000, 1000)
-        
-        # Clear the segments list
-        segments.clear()
+        self.segments.clear()
+        self.points = 0
+        self.delay = DELAY
+        self.update_score()
 
-        # Reset the score
-        points = 0
+    def check_collisions(self):
+        if abs(self.head.xcor()) > SCREEN_WIDTH // 2 - MOVE_DISTANCE or abs(self.head.ycor()) > SCREEN_HEIGHT // 2 - MOVE_DISTANCE:
+            self.reset()
 
-        # Reset the delay
-        delay = 0.1
+        for segment in self.segments:
+            if segment.distance(self.head) < FOOD_SIZE:
+                self.reset()
 
-        pen.clear()
-        pen.write("points_punktzahl: {}  Top_score👻: {}".format(points, points_to_beat), align="center", font=("Courier", 24, "normal")) 
+        if self.head.distance(self.food) < FOOD_SIZE:
+            x = random.randint(-SCREEN_WIDTH // 2 + MOVE_DISTANCE, SCREEN_WIDTH // 2 - MOVE_DISTANCE)
+            y = random.randint(-SCREEN_HEIGHT // 2 + MOVE_DISTANCE, SCREEN_HEIGHT // 2 - MOVE_DISTANCE)
+            self.food.goto(x, y)
+            new_segment = self.create_turtle("circle", "black", self.head.position())
+            self.segments.append(new_segment)
+            self.delay -= 0.001
+            self.points += 10
+            if self.points > self.points_to_beat:
+                self.points_to_beat = self.points
+            self.update_score()
 
+    def move_segments(self):
+        for index in range(len(self.segments) - 1, 0, -1):
+            x = self.segments[index - 1].xcor()
+            y = self.segments[index - 1].ycor()
+            self.segments[index].goto(x, y)
+        if self.segments:
+            x = self.head.xcor()
+            y = self.head.ycor()
+            self.segments[0].goto(x, y)
 
-    # Check for a collision with the food
-    if head.distance(food) < 20:
-        # Move the food to a random spot
-        x = random.randint(-290, 290)
-        y = random.randint(-290, 290)
-        food.goto(x,y)
+    def run(self):
+        while True:
+            self.wn.update()
+            self.check_collisions()
+            self.move_segments()
+            self.move()
+            time.sleep(self.delay)
 
-        # To add a segment
-        new_segment = turtle.Turtle()
-        new_segment.speed(0)
-        new_segment.shape("circle")
-        new_segment.color("black")
-        new_segment.penup()
-        segments.append(new_segment)
-
-       
-        delay -= 0.001
-
-        # To_Increase_Points
-        points += 10
-
-        if points > points_to_beat:
-            points_to_beat= points
-        
-        pen.clear()
-        pen.write("points_punktzahl: {}  Top_score👻: {}".format(points, points_to_beat), align="center", font=("Courier", 24, "normal")) 
-
-    # Move the end segments first in reverse order
-    for index in range(len(segments)-1, 0, -1):
-        x = segments[index-1].xcor()
-        y = segments[index-1].ycor()
-        segments[index].goto(x, y)
-
-    # Move segment 0 to where the head is
-    if len(segments) > 0:
-        x = head.xcor()
-        y = head.ycor()
-        segments[0].goto(x,y)
-
-    move()    
-
-    # Check for head collision with the body segments
-    for segment in segments:
-        if segment.distance(head) < 20:
-            time.sleep(1)
-            head.goto(0,0)
-            head.direction = "stop"
-        
-            
-            for segment in segments:
-                segment.goto(1000, 1000)
-        
-            segments.clear()
-
-            
-            score = 0
-
-            
-            delay = 0.1
-        
-            
-            pen.clear()
-            pen.write("points_punktzahl: {}  Top_score👻: {}".format(points, points_to_beat), align="center", font=("Courier", 24, "normal"))
-
-    time.sleep(delay)
-
-wn.mainloop()
+if __name__ == "__main__":
+    game = Game()
+    game.run()
